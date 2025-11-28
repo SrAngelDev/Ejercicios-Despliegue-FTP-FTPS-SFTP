@@ -1,0 +1,14 @@
+version: '3'
+services:
+  sftp:
+    image: atmoz/sftp
+    container_name: servidor_sftp_seguro
+    volumes:
+      - ./ssh_keys/sftp_key.pub:/home/myuser/.ssh/keys/sftp_key.pub:ro
+      - ./datos_compartidos:/home/myuser/archivos
+    ports:
+      - "2222:22"
+    environment:
+      SFTP_MOTD: "Bienvenido al Servidor SFTP Seguro"
+    command: myuser::1000:1000:archivos 
+    restart: always

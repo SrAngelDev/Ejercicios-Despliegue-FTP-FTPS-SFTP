@@ -1,0 +1,20 @@
+version: '3'
+services:
+  ftp-server-ssl:
+    image: fauria/vsftpd
+    platform: linux/amd64
+    container_name: ftps_server
+    volumes:
+      - ./ftp_data:/home/vsftpd
+      - ./vsftpd_ssl.conf:/etc/vsftpd/vsftpd.conf 
+      - ./certs/vsftpd.crt:/etc/ssl/private/vsftpd.crt 
+      - ./certs/vsftpd.key:/etc/ssl/private/vsftpd.key
+    ports:
+      - "21:21"
+      - "21100-21110:21100-21110"
+    environment:
+      FTP_USER: myuser
+      FTP_PASS: mypass
+      PASV_ADDRESS: 127.0.0.1
+      PASV_MIN_PORT: 21100
+      PASV_MAX_PORT: 21110
