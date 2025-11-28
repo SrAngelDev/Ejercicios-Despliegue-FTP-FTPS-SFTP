@@ -1,111 +1,83 @@
-# Despliegue de Servidores FTP, FTPS y SFTP con Docker
+# Mis Ejercicios de Despliegue: FTP, FTPS y SFTP 🚀
 
-Este repositorio contiene la configuración necesaria para desplegar tres tipos de servidores de transferencia de archivos utilizando Docker y Docker Compose:
+¡Hola! 👋 En este repositorio he subido las prácticas que he estado haciendo para desplegar diferentes tipos de servidores de transferencia de archivos. Todo está montado con **Docker** y **Docker Compose** para que sea súper fácil de levantar y probar.
 
-1.  **FTP** (File Transfer Protocol) - Básico, sin encriptación.
-2.  **FTPS** (FTP Secure) - FTP con capa de seguridad SSL/TLS.
-3.  **SFTP** (SSH File Transfer Protocol) - Transferencia de archivos sobre SSH.
+He configurado tres escenarios distintos:
 
-## Requisitos
+1.  **FTP**: El de toda la vida, básico y sin encriptar.
+2.  **FTPS**: Un poco más seguro, añadiéndole SSL/TLS.
+3.  **SFTP**: El más seguro, usando SSH y claves en lugar de contraseñas.
 
-*   [Docker](https://www.docker.com/get-started) instalado.
-*   [Docker Compose](https://docs.docker.com/compose/install/) instalado.
+## ¿Qué necesitáis?
+
+Simplemente tener instalado **Docker** y **Docker Compose** en vuestra máquina. Con eso ya estaría todo listo para funcionar.
 
 ---
 
-## 1. Servidor FTP (Básico)
+## 1. Servidor FTP (Básico) 📂
 
-Ubicado en la carpeta `FTP/`. Este despliegue configura un servidor FTP simple utilizando `vsftpd`.
+Está en la carpeta `FTP/`. Aquí he montado un servidor simple usando `vsftpd`. Lo he configurado para que el usuario esté "enjaulado" en su directorio y no pueda cotillear por el resto del sistema.
 
-### Características
-*   **Imagen**: `fauria/vsftpd`
+*   **Imagen que he usado**: `fauria/vsftpd`
 *   **Usuario**: `myuser`
 *   **Contraseña**: `mypass`
-*   **Puertos**: 21 (Comando), 21100-21110 (Pasivo)
-*   **Configuración**: Jaula chroot habilitada (los usuarios no pueden salir de su directorio home).
+*   **Puerto**: 21
 
-### Despliegue
+### ¿Cómo lo arranco?
+Entráis en la carpeta y levantáis el compose:
 ```bash
 cd FTP
 docker-compose up -d
 ```
 
-### Conexión
-Puedes conectarte usando cualquier cliente FTP (como FileZilla) o vía terminal:
-*   **Host**: `localhost` (o tu IP)
-*   **Puerto**: `21`
-*   **Usuario**: `myuser`
-*   **Contraseña**: `mypass`
+Para probarlo, podéis usar FileZilla o conectaros por terminal a `localhost` con el usuario y contraseña de arriba.
 
 ---
 
-## 2. Servidor FTPS (Seguro con SSL/TLS)
+## 2. Servidor FTPS (Con SSL) 🔒
 
-Ubicado en la carpeta `FTPS/`. Añade una capa de seguridad al servidor FTP estándar mediante certificados SSL.
+Este lo tenéis en la carpeta `FTPS/`. Es básicamente igual que el anterior, pero le he metido certificados SSL para que la conexión vaya cifrada.
 
-### Características
-*   **Imagen**: `fauria/vsftpd`
-*   **Usuario**: `myuser`
-*   **Contraseña**: `mypass`
-*   **Puertos**: 21, 21100-21110
-*   **Seguridad**: SSL explícito habilitado (`ssl_enable=YES`). Requiere certificados.
+*   **Certificados**: He dejado los archivos `vsftpd.crt` y `vsftpd.key` en la carpeta `certs/`.
+*   **Configuración**: He forzado el uso de SSL (`ssl_enable=YES`).
 
-### Certificados
-Los certificados deben estar ubicados en `FTPS/certs/`:
-*   `vsftpd.crt`
-*   `vsftpd.key`
-
-### Despliegue
+### ¿Cómo lo arranco?
+Igual que el anterior:
 ```bash
 cd FTPS
 docker-compose up -d
 ```
 
-### Conexión
-En tu cliente FTP, asegúrate de seleccionar:
-*   **Protocolo**: FTP
-*   **Cifrado**: Requiere FTP explícito sobre TLS (Use explicit FTP over TLS)
-*   **Usuario/Pass**: `myuser` / `mypass`
+**Ojo al conectar**: En vuestro cliente FTP (como FileZilla), tenéis que elegir la opción de **"Requiere FTP explícito sobre TLS"**, si no, os dará error porque el servidor rechaza conexiones inseguras.
 
 ---
 
-## 3. Servidor SFTP (SSH File Transfer)
+## 3. Servidor SFTP (SSH) 🔑
 
-Ubicado en la carpeta `SFTP/`. Utiliza el protocolo SSH para la transferencia segura de archivos.
+Este es mi favorito, está en la carpeta `SFTP/`. Aquí no usamos contraseñas, sino claves SSH, que es mucho más pro y seguro.
 
-### Características
 *   **Imagen**: `atmoz/sftp`
-*   **Usuario**: `myuser`
-*   **Puerto**: `2222` (mapeado al 22 del contenedor)
-*   **Autenticación**: Mediante clave pública SSH (sin contraseña).
-*   **Volumen**: Los archivos se guardan en `SFTP/datos_compartidos`.
+*   **Puerto**: He mapeado el puerto **2222** de mi máquina al 22 del contenedor.
+*   **Archivos**: Lo que subáis caerá en la carpeta `datos_compartidos`.
 
-### Configuración de Claves
-La clave pública debe estar en `SFTP/ssh_keys/sftp_key.pub`.
-La clave privada (`sftp_key`) se usa para conectar desde el cliente.
+### El tema de las claves
+He generado un par de claves en `ssh_keys/`.
+*   `sftp_key.pub`: Es la llave pública que ya he puesto dentro del contenedor.
+*   `sftp_key`: Es la llave privada que **tú** necesitas para conectarte.
 
-### Despliegue
+### ¿Cómo lo arranco?
 ```bash
 cd SFTP
 docker-compose up -d
 ```
 
-### Conexión
-Usando terminal:
+### ¿Cómo conectar?
+Si usáis terminal, el comando es este (fijaos que indico dónde está la clave privada):
 ```bash
 sftp -P 2222 -i SFTP/ssh_keys/sftp_key myuser@localhost
 ```
-
-O en FileZilla:
-*   **Protocolo**: SFTP
-*   **Host**: `localhost`
-*   **Puerto**: `2222`
-*   **Usuario**: `myuser`
-*   **Archivo de claves**: Selecciona tu clave privada (`sftp_key`).
+Si usáis FileZilla, acordaos de cambiar el protocolo a **SFTP** y en el tipo de logueo seleccionad "Archivo de claves" para cargar el fichero `sftp_key`.
 
 ---
 
-## Notas Generales
-
-*   Para detener cualquier servicio, ejecuta `docker-compose down` dentro de la carpeta correspondiente.
-*   Asegúrate de que los puertos no estén ocupados por otros servicios en tu máquina anfitriona.
+¡Espero que os sirva de ayuda si estáis trasteando con esto! Cualquier cosa o mejora, me decís. 😉
